@@ -1,0 +1,6 @@
+FROM confluentinc/cp-enterprise-kafka
+ADD https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.6.2-amd64.deb .
+RUN apt-get update -y && dpkg -i filebeat-6.6.2-amd64.deb
+COPY filebeat.yml /etc/filebeat/
+RUN service filebeat start
+

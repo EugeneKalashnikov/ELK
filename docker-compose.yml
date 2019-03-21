@@ -1,0 +1,100 @@
+version: '3'
+services:
+
+#  logs_container:
+#    build: ./filebeat
+#    hostname: logs
+#    container_name: logs
+#    volumes: 
+#      - /var/log:/var/log/fromhost:ro
+#    networks:
+#      docker_ekk:
+#        ipv4_address: 172.20.0.6
+#    depends_on:
+#      - elasticsearch
+#      - broker
+
+  zookeeper:
+    hostname: zookeeper
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      docker_ekk:
+        ipv4_address: 172.20.0.5
+
+  broker:
+    build: ./kafka
+    hostname: broker
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:9092'
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:9092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+    networks:
+      docker_ekk:
+        ipv4_address: 172.20.0.3
+    depends_on:
+      - zookeeper
+      - elasticsearch
+
+  elasticsearch:
+    image: elasticsearch:6.6.2
+    hostname: elasticsearch
+    container_name: elastic
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      docker_ekk:
+        ipv4_address: 172.20.0.2
+
+
+  kibana:
+    image: kibana:6.6.2
+    container_name: kibana
+    hostname: kibana
+    ports:
+      - "5601:5601"
+    links:
+      - elasticsearch
+    environment:
+      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+    networks:
+      docker_ekk:
+        ipv4_address: 172.20.0.4
+
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    build: ./logstash
+    container_name: logstash
+    hostname: logstash
+    links:
+      - elasticsearch
+    networks:
+      docker_ekk:
+        ipv4_address: 172.20.0.6
+    depends_on:
+      - elasticsearch
+
+networks:
+  docker_ekk:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.4/16
+      
