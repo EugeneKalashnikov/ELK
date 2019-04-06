@@ -1,19 +1,6 @@
 version: '3'
 services:
 
-#  logs_container:
-#    build: ./filebeat
-#    hostname: logs
-#    container_name: logs
-#    volumes: 
-#      - /var/log:/var/log/fromhost:ro
-#    networks:
-#      docker_ekk:
-#        ipv4_address: 172.20.0.6
-#    depends_on:
-#      - elasticsearch
-#      - broker
-
   zookeeper:
     hostname: zookeeper
     container_name: zookeeper
